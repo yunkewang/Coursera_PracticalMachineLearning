@@ -1,0 +1,75 @@
+---
+title: "Practical Machine Learning course project"
+author: "Yunke Wang"
+date: "Thursday, April 23, 2015"
+output: html_document
+---
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it.
+
+The aim of this report was to use data from accelerometers placed on the belt, forearm, arm, and dumbell of six participants to predict how well they were doing the exercise in terms of the classification in the data. 
+
+Library import:
+
+```{r}
+library(caret)
+library(ggplot2)
+library(reshape)
+library(kernlab)
+library(randomForest)
+library(knitr)
+```
+
+Both training and testing csv files have been added to the current working directory before running the script. Reading the csv file from current working directory for training and processing data.
+
+```{r}
+# read the csv file from current working directory for training 
+pml_training <- read.csv("pml-training.csv", na.strings = c("NA",""," "))
+
+# clean the data by removing columns with missing values
+pml_training_NAs <- apply(pml_training, 2, function(x) {sum(is.na(x))})
+pml_training_clean <- pml_training[,which(pml_training_NAs == 0)]
+
+# remove non-relevant columns such as user name and timestamps
+pml_training_clean <- pml_training_clean[,-(1:7)]
+
+# split the cleaned testing data into training and cross validation
+inTrain <- createDataPartition(y = pml_training_clean$classe, p = 0.80, list = FALSE)
+training <- pml_training_clean[inTrain, ]
+crossval <- pml_training_clean[-inTrain, ]
+```
+
+Plot a correlation matrix for following evaluation
+
+```{r, echo=FALSE}
+correlationMatrix <- cor(training[, -length(training)])
+melted_cormat <- melt(correlationMatrix)
+head(melted_cormat, 10L)
+ggplot(data = melted_cormat, aes(x=X1, y=X2, fill=value)) + geom_tile()
+```
+
+Creating model. The data set was split to 80:20 ratio for training and cross validation. A random forest model has been selected for this project due to its property of balancing error in class unbalanced data sets. The exist of correlation between trees in the forest may increase the forest error rate.  According to the previous plot, correlation issue may not have significant impact on the model. This model may yield a 99.6% prediction accuracy.
+
+```{r}
+# fit a model to predict the classe using everything else as a predictor
+model <- randomForest(classe ~ ., data = training)
+
+# crossvalidate the model using the remaining 20% of original cleaned training data
+predictCrossVal <- predict(model, crossval)
+confusionMatrix(crossval$classe, predictCrossVal)
+confusionMatrix
+```
+
+Prediction. Implemented the same loading and processing steps on the test raw data. Then, the model was used to predict the classifications results of the test data set. 
+
+```{r}
+# apply the same process to prepare test data
+pml_test <- read.csv("pml-testing.csv", na.strings = c("NA",""," "))
+pml_test_NAs <- apply(pml_test, 2, function(x) {sum(is.na(x))})
+pml_test_clean <- pml_test[,which(pml_test_NAs == 0)]
+pml_test_clean <- pml_test_clean[,-(1:7)]
+
+# predict the classes of the test data set
+predictResult <- predict(model, pml_test_clean)
+predictResult
+```

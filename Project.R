@@ -11,7 +11,7 @@ library(randomForest)
 pml_training <- read.csv("pml-training.csv", na.strings = c("NA",""," "))
 
 # clean the data by removing columns with missing values
-pml_training_NAs <- apply(data_training, 2, function(x) {sum(is.na(x))})
+pml_training_NAs <- apply(pml_training, 2, function(x) {sum(is.na(x))})
 pml_training_clean <- pml_training[,which(pml_training_NAs == 0)]
 
 # remove non-relevant columns such as user name and timestamps
@@ -38,8 +38,9 @@ confusionMatrix(crossval$classe, predictCrossVal)
 # apply the same process to prepare test data
 pml_test <- read.csv("pml-testing.csv", na.strings = c("NA",""," "))
 pml_test_NAs <- apply(pml_test, 2, function(x) {sum(is.na(x))})
-pml_test_clean <- pml_test[,which(data_test_NAs == 0)]
+pml_test_clean <- pml_test[,which(pml_test_NAs == 0)]
 pml_test_clean <- pml_test_clean[,-(1:7)]
 
 # predict the classes of the test data set
 predictTest <- predict(model, pml_test_clean)
+predictTest
