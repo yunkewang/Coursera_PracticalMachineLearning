@@ -46,6 +46,17 @@ correlationMatrix <- cor(training[, -length(training)])
 melted_cormat <- melt(correlationMatrix)
 head(melted_cormat, 10L)
 ggplot(data = melted_cormat, aes(x=X1, y=X2, fill=value)) + geom_tile()
+##                  X1        X2      value
+## 1         roll_belt roll_belt  1.0000000
+## 2        pitch_belt roll_belt -0.2156748
+## 3          yaw_belt roll_belt  0.8161443
+## 4  total_accel_belt roll_belt  0.9809217
+## 5      gyros_belt_x roll_belt -0.1181963
+## 6      gyros_belt_y roll_belt  0.4684893
+## 7      gyros_belt_z roll_belt -0.4551524
+## 8      accel_belt_x roll_belt  0.2565304
+## 9      accel_belt_y roll_belt  0.9238299
+## 10     accel_belt_z roll_belt -0.9919969
 ```
 
 Creating model. The data set was split to 80:20 ratio for training and cross validation. A random forest model has been selected for this project due to its property of balancing error in class unbalanced data sets. The exist of correlation between trees in the forest may increase the forest error rate.  According to the previous plot, correlation issue may not have significant impact on the model. This model may yield a 99.6% prediction accuracy.
@@ -57,7 +68,37 @@ model <- randomForest(classe ~ ., data = training)
 # crossvalidate the model using the remaining 20% of original cleaned training data
 predictCrossVal <- predict(model, crossval)
 confusionMatrix(crossval$classe, predictCrossVal)
-confusionMatrix
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 1114    1    0    0    1
+##          B    0  759    0    0    0
+##          C    0    4  680    0    0
+##          D    0    0    8  635    0
+##          E    0    0    0    1  720
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.9962          
+##                  95% CI : (0.9937, 0.9979)
+##     No Information Rate : 0.284           
+##     P-Value [Acc > NIR] : < 2.2e-16       
+##                                           
+##                   Kappa : 0.9952          
+##  Mcnemar's Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            1.0000   0.9935   0.9884   0.9984   0.9986
+## Specificity            0.9993   1.0000   0.9988   0.9976   0.9997
+## Pos Pred Value         0.9982   1.0000   0.9942   0.9876   0.9986
+## Neg Pred Value         1.0000   0.9984   0.9975   0.9997   0.9997
+## Prevalence             0.2840   0.1947   0.1754   0.1621   0.1838
+## Detection Rate         0.2840   0.1935   0.1733   0.1619   0.1835
+## Detection Prevalence   0.2845   0.1935   0.1744   0.1639   0.1838
+## Balanced Accuracy      0.9996   0.9967   0.9936   0.9980   0.9992
 ```
 
 Prediction. Implemented the same loading and processing steps on the test raw data. Then, the model was used to predict the classifications results of the test data set. 
@@ -71,5 +112,7 @@ pml_test_clean <- pml_test_clean[,-(1:7)]
 
 # predict the classes of the test data set
 predictResult <- predict(model, pml_test_clean)
-predictResult
+##  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 
+##  B  A  B  A  A  E  D  B  A  A  B  C  B  A  E  E  A  B  B  B 
+## Levels: A B C D E
 ```
